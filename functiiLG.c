@@ -1,20 +1,18 @@
-/*--- functiiLG.c -- operatii de baza pentru lista simplu inlantuita generica---*/
+/* BALAN Mihnea Andrei - 312CB */
+
 #include "tlg.h"
 
-int Ins_LG(TLG* aL, void* ae)   // ae e TCuvant
+int Ins_LG(TLG* aL, void* ae)
 {
 	TLG p, ant, aux = malloc(sizeof(TCelulaG));
 	if(!aux)
 	    return 0;
-	//int lung = strlen(ae);
-	//for ( ant = NULL, p = *aL; p && (strlen(ae) == ); ant = p, p = p->urm);
-//printf("lungime %d\n", strlen(ae));
-//printf("%s\n", (char*) ae);
 	aux->info = ae;
 	aux->urm = *aL;
 	*aL = aux;
 	return 1;
 }
+
 int Ins_Ord(TLG* aL, void* ae, TFCmp fcmp)
 {
 	TLG p, ant, aux;
@@ -66,29 +64,9 @@ void Afisare(TLG* aL, TF afiEL)
         printf("Lista vida\n");
         return;
     }
-
 	printf("[\n");
 	for(; *aL; aL = &(*aL)->urm) {
 		afiEL((*aL)->info);
     }
 	printf("]\n");
-}
-
-void sortare (TLG l, TFCmp fcmp)
-{
-	int inv = 0;
-	while (!inv){
-		inv = 1;
-		TLG ant = l;
-		for (TLG i = l->urm; i != NULL; i = i->urm){
-			if ( fcmp(ant->info, i->info) ){
-				inv = 0;
-			}
-		}
-	}
-	for (TLG i = l; i != NULL; i = i->urm){
-		for (TLG j = i->urm; j != NULL; j = j->urm){
-
-		}
-	}
 }

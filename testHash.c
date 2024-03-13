@@ -1,40 +1,44 @@
-/*-- testHash.c  */
+/* BALAN Mihnea Andrei - 312CB */
+
 #include <stdio.h>
 #include "tlg.h"
 #include "thash.h"
 #include <string.h>
 
 typedef struct {
-	char word[20];
+	char word[50];
 	int frecv;
 } TCuvant;
+
 typedef struct { 
 	int lung;
 	TLG l;
 } TElement;
 
-int codHash(void * element)
-{
+int Ins_Ord(TLG* aL, void* ae, TFCmp fcmp);
+int Ins_LG(TLG* aL, void* ae);
+TH * GenerareHash(TLG listaCuvinte);
+void AfiTH_caz1(TH* ah,TF afi_elem);
+void AfiTH_caz2(TH* ah,TF afi_elem, char c, char n);
+void AfiTH_caz3(TH* ah,TF afi_elem, char n);
+
+int codHash(void * element){
 	TCuvant * cuvant = (TCuvant *) element;
 	char * word = cuvant->word;
-	if ( (*word) < 'Z' )
+	if ( (*word) <= 'Z' )
 		return *word - 'A';
 	return *word - 'a';
 }
 
-void afisareCuvant(void * element)
-{
+void afisareCuvant(void * element){
 	TCuvant * cuvant = (TCuvant *) element;
-	printf("%s - %d\n", cuvant->word, cuvant->frecv);
-	//printf("e de treaba\n");
+	printf("%s/%d", cuvant->word, cuvant->frecv);
 }
 
-char * filtrare (char *p)
-{
-	for (int i=0; i<=strlen(p); i++)
-	{
-		while(p[i] == '.') // || p[i] == '-')
-		{
+char * filtrare (char *p){
+	int i;
+    for (i = 0; i <= strlen(p); i++){
+		while(p[i] == '.' || p[i] >= '0' && p[i] <= '9' || p[i] == ','){
 			strcpy (p+i, p+i+1);
 		}
 	}
@@ -44,8 +48,7 @@ char * filtrare (char *p)
 	return p;
 }
 
-int lung (void * e1, void * e2)
-{
+int lung (void * e1, void * e2){
 	TCuvant * cuvant1 = (TCuvant *) e1;
 	TCuvant * cuvant2 = (TCuvant *) e2;
 
@@ -54,149 +57,153 @@ int lung (void * e1, void * e2)
 	}	
 	return 1;
 }
-int cmpCuvinte(void * e1, void * e2)
-{
+
+int cmpCuvinte(void * e1, void * e2){
 	TCuvant * cuvant1 = (TCuvant *) e1;
 	TCuvant * cuvant2 = (TCuvant *) e2;
 
 	if (strcmp(cuvant1->word, cuvant2->word) != 0)
 		return 0;
-//printf("cuvantul  %s  se afla de mai multe ori\n", cuvant2->word);
 	return 1;
 }
-int cmpLungime(void * e1, void * e2)
-{
-	TCuvant * cuvant1 = (TCuvant *) e1;
-	TCuvant * cuvant2 = (TCuvant *) e2;
+
+int cmpLungime(void * e1, void * e2){
+	TCuvant *cuvant1 = (TCuvant *) e1;
+	TCuvant *cuvant2 = (TCuvant *) e2;
 
 	if (strlen(cuvant1->word) != strlen(cuvant2->word))
 		return 0;
-//printf("cuvantul  %s  are o lung care se repeta\n", cuvant2->word);
-//printf("okkk\n");
 	return 1;
 }
 
-void counting (TLG l)
-{
+void counting (TLG l){
 	int c;
-	for (TLG i = l; i != NULL; i = i->urm){
+    TLG i;
+	for (i = l; i != NULL; i = i->urm){
 		c = 1;
 		TLG ant = i;
-		for(TLG j = i->urm; j !=NULL; j = j->urm){
-			//Afisare(&j, afisareCuvant);
-			if ( cmpCuvinte(i->info, j->info) ){
+        TLG j;
+		for(j = i->urm; j !=NULL; j = j->urm){
+			if (cmpCuvinte(i->info, j->info)){
 				c++;
-				//printf("anterior:\n");
-				//Afisare(&ant, afisareCuvant);
-				
-					ant->urm = j->urm;
-					//ant = j;
-					
-				
-				//free(j);
-			}
+				ant->urm = j->urm;
+            }
 			else
 				ant = j;
-			//printf("ok");
 		}
 		if ( ((TCuvant*)(i->info))->frecv == 0)
-			((TCuvant*)(i->info))->frecv = c;
+			 ((TCuvant*)(i->info))->frecv = c;
 		else 
 			((TCuvant*)(i->info))->frecv = ((TCuvant*)(i->info))->frecv + c-1;
 	}
 }
 
-TLG citesteListaCuvinte(char * numeFisier) {
+TLG citesteListaCuvinte(char ** argv) {
 	FILE *f;
 	char * line = NULL;
 	size_t len = 0;
 	TLG L = NULL;
-	f = fopen(numeFisier, "rt");
+	f = fopen(argv[1], "rt");
 	if (f == NULL)
 		return NULL;
 
 	while (getline(&line, &len, f) != -1) {
 		char *p;
 		p = strtok (line, " ");
+        p = filtrare(p);
 
-		if (strcmp(p, "insert") == 0){
-			p = strtok (NULL, " ");
+		if (strcmp(p, "insert") == 0){                                     // insert
+			p = strtok (NULL, " \n");
 
 			while (p){        // insereaza in lista cuvantul p
 				p = filtrare(p);					
 				if (strlen(p) >= 3){
-					TCuvant *cuvant = malloc(sizeof(TCuvant));
-					if (cuvant == NULL) {
+					TCuvant * cuvant = malloc(sizeof(TCuvant));
+					if (cuvant == NULL)
 						return L;
-					}
 					strcpy(cuvant->word, p);
-					Ins_Ord (&L, (void *) cuvant, lung);		
+					Ins_Ord (&L, (void *) cuvant, lung);
 					}
 				p = strtok (NULL, " ");
-			}\
-			//Afisare(&L, afisareCuvant);
+			}
 			counting(L);
-			//Afisare(&L, afisareCuvant);
 		}
-		else if (strcmp(p, "print") == 0){
-			//Afisare(&L, afisareCuvant);
+        
+		else if (strcmp(p, "print") == 0 || strcmp(line, "print") == 0){    // print
+            TH * h = NULL;
+            h = GenerareHash(L);
+            if (h == NULL) {
+                printf("Tabela hash nu a putut fi generata\n");
+                return NULL;
+            }
+            p = filtrare(p);
+            p = strtok (NULL, " ");
+
+            if (p == NULL){                                             //printf("caz 1 de printare\n");                
+                printf("caz 1\n");
+                AfiTH_caz1(h, afisareCuvant);
+            }
+            else
+
+            if (p[0] >= 'a' && p[0] <= 'z' || p[0] >= 'A' && p[0] <= 'Z'){  //printf("caz 2 de printare\n");
+                printf("caz 2\n");
+                char c = p[0];
+                p = strtok(NULL, " ");
+                AfiTH_caz2(h, afisareCuvant, c, p[0]);
+            }
+
+            else{                                                       //printf("caz 3 de printare\n");
+                printf("caz 3\n");
+                AfiTH_caz3(h, afisareCuvant, p[0]);
+            }
 		}
     }
 	fclose(f);
 	return L;
 }
 
-void swap(TLG a, TLG b)
-{
-	void* temp;
-	memcpy(temp, a->info, sizeof(TCuvant));
-	memcpy(a->info, b->info, sizeof(TCuvant));
-	memcpy(b->info, temp, sizeof(TCuvant));
+void swap(TLG a, TLG b){
+	void* aux = a->info;
+    a->info = b->info;
+    b->info = aux;
 }
-void bubbleSort(TLG celula)
-{
+
+void bubbleSort(TLG celula){
     int inv = 1, i;
     TLG curent;
-  //printf("ok1\n");
+
     /* Checking for empty list */
     if (celula == NULL){       // start=celula, swapped=inv, prt1=curent, 
         printf("eroare bubble\n");
 		return;               // next=urm
 	}
     while(inv){
-		//Afisare(&celula, afisareCuvant);
         inv = 0;
         curent = celula;
-  	//printf("%s\n", ((TCuvant*)(curent->info))->word);
+    
         while (curent->urm != NULL){
 			TLG ant;
-        	if ( (((TCuvant*)(curent->info))->frecv <
-				  ((TCuvant*)(curent->urm->info))->frecv) || 
-
-				  ( (((TCuvant*)(curent->info))->frecv == 
-					 ((TCuvant*)(curent->urm->info))->frecv) && 
-				  strcmp(((TCuvant*)(curent->info))->word, 
-					  	 ((TCuvant*)(curent->urm->info))->word) > 0))
+            
+        	if ((((TCuvant*)(curent->info))->frecv < ((TCuvant*)(curent->urm->info))->frecv) || 
+				((((TCuvant*)(curent->info))->frecv == ((TCuvant*)(curent->urm->info))->frecv) && 
+				strcmp(((TCuvant*)(curent->info))->word, ((TCuvant*)(curent->urm->info))->word) > 0))
 			{
-				//printf("se face swap\n");          //PROBLEMA
                 swap(curent, curent->urm);         
                 inv = 1;
             }
             curent = curent->urm;
-			//printf("ok aici\n");
         }
     }
 }
 
-TH * GenerareHash(TLG listaCuvinte)
-{
+TH * GenerareHash(TLG listaCuvinte){
     TH *h = NULL;
 	TLG p;
     TCuvant * cuvant;
 	int rez, i;
 
 	/* calcul dimensiuni maxime pt tabela hash */
-	size_t M = ('Z'-'A');
+	size_t M = ('Z'-'A')+1;
 
 	/* initializare tabela hash */
 	h = (TH *) InitTH(M, codHash);
@@ -207,7 +214,6 @@ TH * GenerareHash(TLG listaCuvinte)
         cuvant = (TCuvant *) malloc(sizeof(TCuvant));
         if(cuvant == NULL)
 			return h;
-//printf("\n \n %s \n \n", ((TCarte*)(p->info))->editura);
         memcpy(cuvant, p->info, sizeof(TCuvant));
 		rez = InsTH(h, cuvant, cmpLungime);
         if(!rez) {
@@ -216,33 +222,14 @@ TH * GenerareHash(TLG listaCuvinte)
 		}
 	}
 	for (i=0; i<M; i++){
-		//printf("apelez\n");
 		for (p = h->v[i]; p != NULL; p = p->urm){
-			//printf("ok\n");                           //PROBLEMA
 			bubbleSort(((TElement*)(p->info))->l);
 		}
 	}
 	return h;
 }
 
-TLG clasificare()
-{
-	char* s = calloc(10, sizeof(char));
-	FILE *f;
-	f = fopen("fisier_txt.txt", "rt");
-	if (f == NULL)
-		return NULL;
-	fscanf(f, "%s ", s);
-	puts(s);
-	if (strcmp(s, "insert") == 0)
-		return citesteListaCuvinte("fisier_txt.txt");
-	return NULL;
-}
-
-
-
-TH* InitTH(size_t M, TFHash fh)
-{
+TH* InitTH(size_t M, TFHash fh){
     TH* h = (TH *) calloc(sizeof(TH), 1);
     if (!h) {
         printf("eroare alocare hash\n");
@@ -250,7 +237,8 @@ TH* InitTH(size_t M, TFHash fh)
     }
 
     h->v = (TLG *) calloc(M, sizeof(TLG));
-	for (int i=0; i<M; i++){
+    int i;
+	for (i=0; i<M; i++){
 		h->v[i] = NULL;
 	}
     if(!h->v) {
@@ -258,20 +246,13 @@ TH* InitTH(size_t M, TFHash fh)
         free(h);
         return NULL;
     }
-    // for (int i = 0; i < M; i++){
-    //     h->v[i] = calloc (15, sizeof(TLG));
-    // }
-    // for (int i = 0; i < M; i++){
-    //         h->v[i];
-    // }
 
     h->M = M;
     h->fh = fh;
     return h;
 }
 
-void DistrTH(TH** ah, TF elib_elem)
-{
+void DistrTH(TH** ah, TF elib_elem){
     TLG * p, el, aux;
 
     /* parcurgere cu pointeri */
@@ -290,19 +271,114 @@ void DistrTH(TH** ah, TF elib_elem)
     *ah = NULL;
 }
 
-void AfiTH(TH* ah,TF afi_elem)
-{
+void AfiTH_caz1(TH* ah,TF afi_elem){
     TLG p, el;
     int i;
     for(i = 0; i < ah->M; i++) {
-        for (p = ah->v[i]; p != NULL; p = p->urm){
-            if(p) {
-                //printf("hmmmmmmm : %s\n", ((TElement*) p)->word);
-printf("LISTA elementelor de lungime %d care incep cu %d:\n", ((TElement*) (p->info))->lung, i);
+        
+        if(ah->v[i]){
+            printf("pos %d: ", i);
+            
+            for (p = ah->v[i]; p != NULL; p = p->urm){               
+                    int inceput = 0;
+                    printf("(%d:", ((TElement*)(p->info))->lung);
+                    el = ((TElement*)(p->info))->l;
+                    if (el == NULL)     
+                        printf("=(\n");
+
+                    for(el = ((TElement*)(p->info))->l; el != NULL; el = el->urm){
+                        if (inceput){
+                            printf(", ");
+                        }
+                        afi_elem(el->info);
+                        inceput = 1;
+                    }
+                printf(")");
+            }
+            printf("\n");
+        }
+    }
+}
+
+void AfiTH_caz2(TH* ah,TF afi_elem, char c, char n){
+    TLG p, el;
+    int i, ok = 0;
+
+    if ( c <= 'Z' )
+		i = c - 'A';
+	else 
+        i = c - 'a';
+
+    for (p = ah->v[i]; p != NULL; p = p->urm)
+        if (((TElement*)(p->info))->lung == n-'0')
+            ok = 1;
+
+    if (ok){
+        for (p = ah->v[i]; p != NULL; p = p->urm){  
+            if ( ((TElement*)(p->info))->lung == n-'0'){
+                int inceput = 0;
+                printf("(%d:", ((TElement*)(p->info))->lung);
                 el = ((TElement*)(p->info))->l;
-				if (el == NULL) printf("=(\n");
-				for(el = ((TElement*)(p->info))->l; el != NULL; el = el->urm)
+                if (el == NULL)     
+                    printf("=(\n");
+                for(el = ((TElement*)(p->info))->l; el != NULL; el = el->urm){
+                    if (inceput){
+                        printf(", ");
+                    }
                     afi_elem(el->info);
+                    inceput = 1;
+                }
+                printf(")");
+            }
+        }
+        printf("\n");
+    }
+}
+
+void AfiTH_caz3(TH* ah,TF afi_elem, char n){
+    TLG p, q, el;
+    int i, j, ok1, ok2;
+    for(i = 0; i < ah->M; i++) {
+        ok1 = 0;
+        if(ah->v[i]){
+            ok1 = 0;
+
+            for (p = ah->v[i]; p != NULL; p = p->urm)
+                for (q = ((TElement*)(p->info))->l; q != NULL; q = q->urm)
+                    if ( ((TCuvant*)(q->info))->frecv <= n-'0'){
+                        ok1 = 1;
+                        break;
+                    }
+
+            if (ok1){
+                printf("pos%d: ", i);   
+                for (p = ah->v[i]; p != NULL; p = p->urm){               
+                    ok2 = 0;         
+                    for (q = ((TElement*)(p->info))->l; q != NULL; q = q->urm){
+                        if ( ((TCuvant*)(q->info))->frecv <= n-'0'){
+                            ok2 = 1;
+                            break;
+                        }
+                    }
+
+                    if (ok2){
+                        int inceput = 0;
+                        printf("(%d: ", ((TElement*)(p->info))->lung);
+                        el = ((TElement*)(p->info))->l;
+                        if (el == NULL)     
+                            printf("=(\n");
+                        for(el = ((TElement*)(p->info))->l; el != NULL; el = el->urm){
+                            if (inceput){
+                                printf(", ");
+                            }
+                            if ( ((TCuvant*)(el->info))->frecv <= n-'0'){
+                                afi_elem(el->info);
+                                inceput = 1;
+                            }
+                        }
+                        printf(")");
+                    }
+                }
                 printf("\n");
             }
         }
@@ -311,89 +387,47 @@ printf("LISTA elementelor de lungime %d care incep cu %d:\n", ((TElement*) (p->i
 
 /* daca elementul exista functia intoarce 0
  *altfel se incearca inserarea elementului si se intoarce rezultatul inserarii */
-int InsTH(TH*a, void* ae, TFCmp fcmp)
-{
+int InsTH(TH*a, void* ae, TFCmp fcmp){
     int cod = a->fh(ae), rez, ok=1, c=0;
     TLG el;
-//printf("cuvantul de inserat: %s, cu codul: %d\n", ae, cod);
     for(el = a->v[cod]; el != NULL; el = el->urm) {
-        //printf("%d\n", ((TElement*)(el->info))->lung);
         if (((TElement*)(el->info))->lung == strlen((char*)ae)){
             ok = 0;
             break;
         }
         c++;
     }
-    //printf("ok\n");
     if (ok==1){
-        ////printf("Sunt pe cazul cand fac un nou Telement\n");
-        //printf("nu a gasit lungime %d, %s\n", strlen(ae), ae);
         TElement* ins=malloc(sizeof(TElement));
-        ins->l=NULL;
-        ins->lung=strlen((char*)ae);
-		TCuvant* add=malloc(sizeof(TCuvant));
+        ins->l = NULL;
+        ins->lung = strlen((char*)ae);
+		TCuvant* add = malloc(sizeof(TCuvant));
 		add->frecv = ((TCuvant*)ae)->frecv;
 		strcpy(add->word,(char*)ae);
 
-//printf("%d\n\n", ins->lung);
         Ins_LG(&(a->v[cod]), (void*) ins);
 		rez = Ins_LG(&(((TElement*)(a->v[cod]->info))->l), (void*) add);
-        //rez = Ins_LG(a->v+cod, ae);
 
     }
     else{
-        //printf("Sunt pe cazul cand fac doar un nou Tcuvant\n");
-        //for(; c; el = a->v[cod]->urm, c--);
-		//printf("pas 1\n");
-        TLG* verticala=&((TElement*)(a->v[cod]->info))->l;
-		
-
-        TCuvant* add=malloc(sizeof(TCuvant));
+        TLG* verticala = &((TElement*)(a->v[cod]->info))->l;
+        TCuvant* add = malloc(sizeof(TCuvant));
         add->frecv = ((TCuvant*)ae)->frecv;
-        
         strcpy(add->word,(char*)ae);
-//printf("%s\n", add->word);
         rez =  Ins_LG(verticala, (void*) add);
-		//Afisare(verticala, afisareCuvant);
-        //printf("a gasit lungime %d, %s\n", strlen(ae), ae);
-        //printf("\n");
-        //rez = Ins_LG(a->v+cod, ae);
     }
-    //printf(" lungimea cuvantului %s este %d\n", ae, strlen(ae));
-    //rez = Ins_LG(a->v+cod, ae); /* reminder: a->v+cod <=> &a->v[cod] */
     return rez;
 }
 
-
-  
-/* function to swap data of two nodes a and b*/
-
-int main()
-{//printf("ok\n");
-	//TLG listaCarti = clasificare();
-	
-	TLG listaCuvinte = citesteListaCuvinte("fisier_txt.txt");
+int main(int argc, char **argv)
+{   
+	TLG listaCuvinte = citesteListaCuvinte(argv);
 	if (listaCuvinte == NULL) {
 		printf("Lista nu a putut fi generata\n");
         return 0;
 	}
 
-	//counting(listaCuvinte);
-	//bubbleSort(listaCuvinte);
-	printf("=========== LISTA CARTI ===========\n");
-	Afisare(&listaCuvinte, afisareCuvant);
-
-	TH * h = NULL;
-	h = GenerareHash(listaCuvinte);
-	if (h == NULL) {
-		printf("Tabela hash nu a putut fi generata\n");
-        return 0;
-	}
-//printf("okish");
-	printf("\n\n=========== TABELA HASH ===========\n");
-	AfiTH(h, afisareCuvant);
-//printf("okk\n");
-  	DistrugeLG(&listaCuvinte, free);
-	DistrTH(&h, free);
+  	// DistrugeLG(&listaCuvinte, free);
+	// DistrTH(&h, free);
   	return 0;
 }

@@ -1,4 +1,5 @@
-/*-- tlg.h --- LISTA SIMPLU INLANTUITA GENERICA ---*/
+/* BALAN Mihnea Andrei - 312CB */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -23,7 +24,5 @@ int Ins_IncLG(TLG*, void*);  /*- inserare la inceput reusita sau nu (1/0) -*/
 void DistrugeLG(TLG* aL, TF fe); /* distruge lista */
 /* afiseaza elementele din lista, folosind o functie de tip TFAfi */
 void Afisare(TLG*, TF);
-int Ins_LG(TLG* aL, void* ae);
-int Ins_Ord(TLG* aL, void* ae, TFCmp fcmp);
 
 #endif

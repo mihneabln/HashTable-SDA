@@ -1,3 +1,5 @@
+/* BALAN Mihnea Andrei - 312CB */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
